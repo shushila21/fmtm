@@ -25,18 +25,54 @@ from sqlalchemy.orm import Session
 from ..db import database
 from ..users import user_crud, user_schemas
 
-from . import AuthUser, login_required, osm_auth
+from .auth_schemas import AuthUser
+from .auth_utils import login_required, osm_auth_api, osm_auth_flask
 
-router = APIRouter(prefix="/auth")
+router = APIRouter(prefix="/auth",
+                   tags=["auth"],
+                   dependencies=[Depends(database.get_db)],
+                   responses={404: {"description": "Not found"}},)
 
 
-@router.get("/login/")
-def login(user: user_schemas.UserIn, db: Session = Depends(database.get_db)):
-    return user_crud.verify_user(db, user)
+# @router.get("/login/")
+# def login(user: user_schemas.UserIn, db: Session = Depends(database.get_db)):
+#     return user_crud.verify_user(db, user)
 
 
-@router.get("/osm_login/")
-def login_url(request: Request):
+@router.get("/osm_login_api/")
+def login_api(request: Request):
+    """Generate Login URL from API for authentication using OAuth2 Application registered with OpenStreetMap.
+    Click on the download url returned to get access_token.
+
+    Parameters: None
+
+    Returns:
+    - login_url (string) - URL to authorize user to the application via. Openstreetmap
+        OAuth2 with client_id, redirect_uri, and permission scope as query_string parameters
+    """
+    login_url = osm_auth_api.login()
+    return json.loads(login_url)
+
+
+@router.get("/callback_api/")
+def callback_api(request: Request):
+    """Performs token exchange between OpenStreetMap and FMTM API
+
+    Core will use Oauth secret key from configuration while deserializing token,
+    provides access token that can be used for authorized endpoints.
+
+    Parameters: None
+
+    Returns:
+    - access_token (string)
+    """
+    access_token = osm_auth_api.callback(str(request.url))
+
+    return json.loads(access_token)
+
+
+@router.get("/osm_login_flask/")
+def login_flask(request: Request):
     """Generate Login URL for authentication using OAuth2 Application registered with OpenStreetMap.
     Click on the download url returned to get access_token.
 
@@ -46,12 +82,12 @@ def login_url(request: Request):
     - login_url (string) - URL to authorize user to the application via. Openstreetmap
         OAuth2 with client_id, redirect_uri, and permission scope as query_string parameters
     """
-    login_url = osm_auth.login()
+    login_url = osm_auth_flask.login()
     return json.loads(login_url)
 
 
-@router.get("/callback/")
-def callback(request: Request):
+@router.get("/callback_flask/")
+def callback_flask(url: str):
     """Performs token exchange between OpenStreetMap and Export tool API
 
     Core will use Oauth secret key from configuration while deserializing token,
@@ -62,7 +98,7 @@ def callback(request: Request):
     Returns:
     - access_token (string)
     """
-    access_token = osm_auth.callback(str(request.url))
+    access_token = osm_auth_flask.callback(url)
 
     return json.loads(access_token)
 

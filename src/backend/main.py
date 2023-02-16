@@ -27,8 +27,8 @@ from fastapi import FastAPI
 from fastapi.logger import logger as fastapi_logger
 from fastapi.responses import FileResponse
 
-from .auth import routers as auth_routers
 from .db.database import Base, SessionLocal, engine
+from .auth import auth_routers
 from .projects import project_routes
 from .tasks import tasks_routes
 from .users import user_routes
@@ -64,11 +64,13 @@ Base.metadata.create_all(bind=engine)
 
 api = FastAPI()
 
-api.include_router(user_routes.router)
+api.include_router(auth_routers.router)
 api.include_router(project_routes.router)
 api.include_router(tasks_routes.router)
+api.include_router(user_routes.router)
 api.include_router(debug_routes.router)
 api.include_router(central_routes.router)
+
 
 origins = [
     "http://localhost",
@@ -82,9 +84,6 @@ api.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-api.include_router(auth_routers.router)
 
 
 @api.get("/")

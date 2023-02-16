@@ -18,7 +18,7 @@
 import os
 import functools
 from flask import (Blueprint, flash, g, redirect, render_template, request,
-                   session, url_for)
+                   session, url_for, make_response)
 from werkzeug.security import check_password_hash, generate_password_hash
 
 # api
@@ -43,6 +43,47 @@ class User:
     def __init__(self, id, username):
         self.id = id
         self.username = username
+
+
+# auth: {
+#     loggedIn: safeStorage.getItem("loggedIn"),
+#     accessToken: safeStorage.getItem("token"),
+# },
+
+# http: // 127.0.0.1: 8000/auth/callback_api /?
+# code = uknm9pQWswt5UxkXk7QpmcrucG6oJezjdv8qnx6xBn0 &
+# state = BGRw1hYKLr6bVOHqMAaIcaTcCWsDjL
+
+
+@bp.route("/success", methods=("GET", "POST"))
+def callback():
+    try:
+        with requests.Session() as s:
+            response = s.get(
+                f"{base_url}/auth/callback_flask/",  params={'url': str(request.url)})
+            if response.status_code == 200:
+                response_dict = response.json()
+
+                access_token = response_dict.get('access_token')
+
+                resp = make_response()
+                resp.set_cookie('osm_token', access_token)
+
+                # return to previous page if there is one
+                if 'url' in session:
+                    resp.headers['location'] = url_for(session['url'])
+                else:
+                    resp.headers['location'] = url_for("index")
+
+                return resp, 302
+            else:
+                error = f"Response was not sucessful. See: {response.json()}"
+
+    except Exception as e:
+        error = f"Login failed due to {e}"
+
+    flash(error)
+    return redirect(url_for("index"))
 
 
 @bp.route("/register", methods=("GET", "POST"))
@@ -76,43 +117,57 @@ def register():
 
 @bp.route("/login", methods=("GET", "POST"))
 def login():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-        error = None
+    try:
+        with requests.Session() as s:
+            response = s.get(
+                f"{base_url}/auth/osm_login_flask/")
+            if response.status_code == 200:
+                response_dict = response.json()
 
-        if not username:
-            error = "Username is required."
-        elif not password:
-            error = "Password is required."
+                login_url = response_dict.get('login_url')
 
-        if error is None:
-            try:
-                with requests.Session() as s:
-                    response = s.post(
-                        f"{base_url}/login/", json={'username': username, 'password': password})
-                    if response.status_code == 200:
-                        response_dict = response.json()
+                return redirect(login_url, 301)
+            else:
+                error = f"Response was not sucessful. See: {response.json()}"
 
-                        user_id = response_dict.get('id')
-                        username = response_dict.get('username')
+    except Exception as e:
+        error = f"Login failed due to {e}"
 
-                        if user_id and username:
-                            session.clear()
-                            session["user_id"] = user_id
-                            session["username"] = username
-                            return redirect(url_for("index"))
-                        else:
-                            error = f"Response was successful but everything is not well. See: {response_dict}"
+    flash(error)
+    return redirect(url_for("index"))
 
-                    elif response.status_code == 400:
-                        error = "Login failed."
-            except Exception as e:
-                error = f"Login failed due to {e}"
+    #     username = request.form["username"]
+    #     password = request.form["password"]
+    #     error = None
 
-        flash(error)
+    #     if not username:
+    #         error = "Username is required."
+    #     elif not password:
+    #         error = "Password is required."
 
-    return render_template("auth/login.html")
+    #     if error is None:
+    #         try:
+    #             with requests.Session() as s:
+    #                 response = s.post(
+    #                     f"{base_url}/login/", json={'username': username, 'password': password})
+    #                 if response.status_code == 200:
+    #                     response_dict = response.json()
+
+    #                     user_id = response_dict.get('id')
+    #                     username = response_dict.get('username')
+
+    #                     if user_id and username:
+    #                         session.clear()
+    #                         session["user_id"] = user_id
+    #                         session["username"] = username
+    #                         return redirect(url_for("index"))
+    #                     else:
+    #                         error = f"Response was successful but everything is not well. See: {response_dict}"
+
+    #                 elif response.status_code == 400:
+    #                     error = "Login failed."
+
+    # return render_template("auth/login.html")
 
 
 @bp.route("/logout")

@@ -22,6 +22,8 @@ from sqlalchemy.orm import Session
 
 from ..db import database
 from . import project_crud, project_schemas
+from ..auth.auth_utils import login_required
+from ..auth import auth_schemas
 
 router = APIRouter(
     prefix="/projects",
@@ -68,7 +70,9 @@ async def read_project(project_id: int, db: Session = Depends(database.get_db)):
 
 
 @router.post("/delete/{project_id}")
-async def delete_project(project_id: int, db: Session = Depends(database.get_db)):
+async def delete_project(project_id: int,
+                         db: Session = Depends(database.get_db),
+                         user_data=Depends(login_required)):
     project = project_crud.delete_project_by_id(db, project_id)
     if project:
         return project

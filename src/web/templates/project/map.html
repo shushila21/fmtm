@@ -138,15 +138,23 @@
   }
 
   function setMap() {
-    var map = L.map('map');
+    var map = L.map('map', {
+      zoomSnap: 0.1
+    });
     const osm = L.tileLayer(
       "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
       {
         attribution:
           '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxNativeZoom: 19,
+        maxZoom: 25
       }
     ).addTo(map);
 
+    return map;
+  }
+
+  function addOutline() {
     // add outline
     outline_layer = L.geoJSON(p_outline);
     outline_layer.setStyle({
@@ -159,11 +167,10 @@
 
     // zoom to map
     map.fitBounds(outline_layer.getBounds());
-
-    return map;
   }
 
   map = setMap();
+  addOutline();
 
   document.getElementById("center_project").onclick = function () {
     centerOnMap()

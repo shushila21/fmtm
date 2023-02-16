@@ -28,91 +28,11 @@ bp = Blueprint("auth", __name__, url_prefix="/auth")
 base_url = os.getenv("API_URL")
 
 
-def ping(url):
-    try:
-        request = requests.get(url, verify=False)
-        is_up = request.status_code == 200
-        print(f'{url}, up_status={is_up}')
-        return request
-    except Exception as e:
-        print(f'Error thrown: {e}')
-        return e
-
-
 class User:
-    def __init__(self, id, username):
+    def __init__(self, id, username, img_url):
         self.id = id
         self.username = username
-
-
-# auth: {
-#     loggedIn: safeStorage.getItem("loggedIn"),
-#     accessToken: safeStorage.getItem("token"),
-# },
-
-# http: // 127.0.0.1: 8000/auth/callback_api /?
-# code = uknm9pQWswt5UxkXk7QpmcrucG6oJezjdv8qnx6xBn0 &
-# state = BGRw1hYKLr6bVOHqMAaIcaTcCWsDjL
-
-
-@bp.route("/success", methods=("GET", "POST"))
-def callback():
-    try:
-        with requests.Session() as s:
-            response = s.get(
-                f"{base_url}/auth/callback_flask/",  params={'url': str(request.url)})
-            if response.status_code == 200:
-                response_dict = response.json()
-
-                access_token = response_dict.get('access_token')
-
-                resp = make_response()
-                resp.set_cookie('osm_token', access_token)
-
-                # return to previous page if there is one
-                if 'url' in session:
-                    resp.headers['location'] = url_for(session['url'])
-                else:
-                    resp.headers['location'] = url_for("index")
-
-                return resp, 302
-            else:
-                error = f"Response was not sucessful. See: {response.json()}"
-
-    except Exception as e:
-        error = f"Login failed due to {e}"
-
-    flash(error)
-    return redirect(url_for("index"))
-
-
-@bp.route("/register", methods=("GET", "POST"))
-def register():
-    if request.method == "POST":
-
-        username = request.form["username"]
-        password = request.form["password"]
-        error = None
-
-        if not username:
-            error = "Username is required."
-        elif not password:
-            error = "Password is required."
-
-        if error is None:
-            try:
-                with requests.Session() as s:
-                    response = s.post(
-                        f"{base_url}/users/", json={'username': username, 'password': password})
-                    if response.status_code == 200:
-                        return redirect(url_for("auth.login"))
-
-                    elif response.status_code == 400:
-                        error = "Username already registered."
-            except Exception as e:
-                error = f"Registration failed due to {e}"
-        flash(error)
-    return render_template("auth/register.html")
+        self.img_url = img_url
 
 
 @bp.route("/login", methods=("GET", "POST"))
@@ -136,44 +56,41 @@ def login():
     flash(error)
     return redirect(url_for("index"))
 
-    #     username = request.form["username"]
-    #     password = request.form["password"]
-    #     error = None
 
-    #     if not username:
-    #         error = "Username is required."
-    #     elif not password:
-    #         error = "Password is required."
+@bp.route("/success", methods=("GET", "POST"))
+def callback():
+    try:
+        with requests.Session() as s:
+            response = s.get(
+                f"{base_url}/auth/callback_flask/",  params={'url': str(request.url)})
+            if response.status_code == 200:
+                response_dict = response.json()
 
-    #     if error is None:
-    #         try:
-    #             with requests.Session() as s:
-    #                 response = s.post(
-    #                     f"{base_url}/login/", json={'username': username, 'password': password})
-    #                 if response.status_code == 200:
-    #                     response_dict = response.json()
+                access_token = response_dict.get('access_token')
 
-    #                     user_id = response_dict.get('id')
-    #                     username = response_dict.get('username')
+                # return to previous page if there is one
+                if 'url' in session:
+                    resp = set_user_token(access_token, session['url'])
+                else:
+                    resp = set_user_token(access_token, "index")
 
-    #                     if user_id and username:
-    #                         session.clear()
-    #                         session["user_id"] = user_id
-    #                         session["username"] = username
-    #                         return redirect(url_for("index"))
-    #                     else:
-    #                         error = f"Response was successful but everything is not well. See: {response_dict}"
+                get_user_details(access_token)
 
-    #                 elif response.status_code == 400:
-    #                     error = "Login failed."
+                return resp, 302
+            else:
+                error = f"Response was not sucessful. See: {response.json()}"
 
-    # return render_template("auth/login.html")
+    except Exception as e:
+        error = f"Login failed due to {e}"
+
+    flash(error)
+    return redirect(url_for("index"))
 
 
 @bp.route("/logout")
 def logout():
-    session.clear()
-    return redirect(url_for("index"))
+    resp = set_user_token(None, "index")
+    return resp, 302
 
 
 @bp.before_app_request
@@ -183,7 +100,7 @@ def load_logged_in_user():
     if user_id is None:
         g.user = None
     else:
-        g.user = User(user_id, session["username"])
+        g.user = User(user_id, session["username"], session['user_img_url'])
 
 
 def login_required(view):
@@ -194,3 +111,35 @@ def login_required(view):
         return view(**kwargs)
 
     return wrapped_view
+
+
+def set_user_token(access_token: str, where_to_next: str):
+    resp = make_response()
+    if (access_token):
+        resp.set_cookie('osm_token', access_token)
+        session['osm_token'] = access_token
+    else:
+        resp.set_cookie('osm_token', '', expires=0)
+        session.clear()  # assumes that this is a logout
+    resp.headers['location'] = url_for(where_to_next)
+    return resp
+
+
+def remove_user_tokens(where_to_next: str = "index"):
+    return set_user_token(None, where_to_next)
+
+
+def get_user_details(access_token: str):
+    with requests.Session() as s:
+        response = s.get(
+            f"{base_url}/auth/me/",  headers={'access-token': access_token})
+        if response.status_code == 200:
+            response_dict = response.json()
+
+            session['user_id'] = response_dict['id']
+            session['username'] = response_dict['username']
+            session['user_img_url'] = response_dict['img_url']
+        else:
+            # assume this token is bad and logout
+            flash(f"Could not get user details: {response.json()}")
+            remove_user_tokens()

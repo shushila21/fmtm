@@ -41,6 +41,8 @@ grid_filename = "grid.geojson"
 def index():
     session["open_task_id"] = -1
     session['project_id'] = None
+
+    session['osm_token'] = request.cookies.get('user_token')
     try:
         with requests.Session() as s:
             response = s.get(f"{base_url}/projects/?skip=0&limit=100")

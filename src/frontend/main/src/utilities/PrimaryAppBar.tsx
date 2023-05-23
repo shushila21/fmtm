@@ -8,6 +8,7 @@ import AssetModules from '../shared/AssetModules';
 import { LoginActions } from '../store/slices/LoginSlice';
 import { ProjectActions } from '../store/slices/ProjectSlice';
 import { useState } from 'react';
+import { Typography } from '@mui/material';
 
 export default function PrimaryAppBar() {
   const [open, setOpen] = React.useState<boolean>(false);
@@ -73,7 +74,19 @@ export default function PrimaryAppBar() {
           </CoreModules.Link>
 
           {/* Tabs switch added */}
-          <CoreModules.Tabs sx={{ marginLeft: '2%', flexGrow: 20 }} className="header-tabs">
+          <CoreModules.Tabs
+            sx={{
+              marginLeft: '2%',
+              flexGrow: 20,
+              display: {
+                xs: 'none',
+                sm: 'none',
+                md: 'block',
+                lg: 'block',
+              },
+            }}
+            className="header-tabs"
+          >
             <CoreModules.Link to={'/'} style={{ color: defaultTheme.palette.black }}>
               <CoreModules.Tab
                 label="EXPLORE PROJECTS"
@@ -116,7 +129,7 @@ export default function PrimaryAppBar() {
                 variant="typography"
                 color={'info'}
                 noWrap
-                sx={{ display: { xs: 'none', md: 'block', background: 'red' } }}
+                sx={{ display: { xs: 'none', md: 'block' } }}
               >
                 {token['username']}
               </CoreModules.Typography>

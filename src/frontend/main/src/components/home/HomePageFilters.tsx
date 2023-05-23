@@ -137,8 +137,17 @@ const HomePageFilters = () => {
           gap: 5,
         }}
       >
-        <CoreModules.FormControl size="small" sx={{ m: 1, minWidth: 120, width: 250 }} margin="normal">
-          <CoreModules.InputLabel id="demo-simple-select-helper-label">Age</CoreModules.InputLabel>
+        <CoreModules.FormControl size="small" sx={{ m: 1, minWidth: 120, width: 250 }} margin="normal" variant="filled">
+          <CoreModules.InputLabel
+            id="demo-simple-select-helper-label"
+            sx={{
+              '&.Mui-focused': {
+                color: defaultTheme.palette.black,
+              },
+            }}
+          >
+            Projects
+          </CoreModules.InputLabel>
           <CoreModules.Select
             labelId="demo-simple-select-helper-label"
             id="demo-simple-select-helper"

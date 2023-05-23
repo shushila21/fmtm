@@ -7,7 +7,7 @@ import { OrganizationDataService } from '../api/OrganizationService';
 const Organization = () => {
   const cardStyle = {
     width: 520,
-    padding: 3,
+    padding: 2,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',

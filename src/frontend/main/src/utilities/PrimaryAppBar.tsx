@@ -57,7 +57,7 @@ export default function PrimaryAppBar() {
   const [activeTab, setActiveTab] = useState(0);
 
   return (
-    <CoreModules.Stack sx={{ flexGrow: 1 }}>
+    <CoreModules.Stack sx={{ flexGrow: 0.2 }}>
       <DrawerComponent
         open={open}
         placement={'right'}
@@ -73,7 +73,7 @@ export default function PrimaryAppBar() {
           </CoreModules.Link>
 
           {/* Tabs switch added */}
-          <CoreModules.Tabs sx={{ marginLeft: '2%' }} className="header-tabs" width={'50%'}>
+          <CoreModules.Tabs sx={{ marginLeft: '2%', flexGrow: 20 }} className="header-tabs">
             <CoreModules.Link to={'/'} style={{ color: defaultTheme.palette.black }}>
               <CoreModules.Tab
                 label="EXPLORE PROJECTS"
@@ -110,13 +110,13 @@ export default function PrimaryAppBar() {
           </CoreModules.Tabs>
           {/* position changed */}
           {token != null && (
-            <CoreModules.Stack direction={'row'} spacing={1} ml={'46%'} justifyContent="center" alignItems="center">
+            <CoreModules.Stack direction={'row'} spacing={1} justifyContent="center" alignItems="center">
               <AssetModules.PersonIcon color="success" sx={{ display: { xs: 'none', md: 'block' }, mt: '3%' }} />
               <CoreModules.Typography
                 variant="typography"
                 color={'info'}
                 noWrap
-                sx={{ display: { xs: 'none', md: 'block' } }}
+                sx={{ display: { xs: 'none', md: 'block', background: 'red' } }}
               >
                 {token['username']}
               </CoreModules.Typography>

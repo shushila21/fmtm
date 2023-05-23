@@ -6,7 +6,11 @@ import { OrganizationDataService } from '../api/OrganizationService';
 
 const Organization = () => {
   const cardStyle = {
-    width: 520,
+    width: {
+      xs: 350,
+      sm: 420,
+      lg: 520,
+    },
     padding: 2,
     display: 'flex',
     flexDirection: 'column',
@@ -73,7 +77,18 @@ const Organization = () => {
           }}
         />
       </CoreModules.Box>
-      <CoreModules.Box sx={{ display: 'flex', flexWrap: 'wrap', gap: '3rem' }}>
+      <CoreModules.Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          sm: { flexWrap: 'nowrap' },
+          gap: {
+            xs: '2rem',
+            md: '2rem',
+            lg: '3rem',
+          },
+        }}
+      >
         {filteredCardData?.map((data, index) => (
           <CoreModules.Card key={index} sx={cardStyle}>
             <CoreModules.Typography variant="subtitle1">{data.name}</CoreModules.Typography>

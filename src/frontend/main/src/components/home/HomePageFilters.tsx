@@ -137,7 +137,7 @@ const HomePageFilters = () => {
           gap: 5,
         }}
       >
-        <CoreModules.FormControl size="small" sx={{ m: 1, minWidth: 120, width: 250 }} margin="normal" variant="filled">
+        <CoreModules.FormControl size="small" sx={{ m: 1, minWidth: 120, width: 250 }} margin="normal">
           <CoreModules.InputLabel
             id="demo-simple-select-helper-label"
             sx={{
@@ -170,15 +170,15 @@ const HomePageFilters = () => {
           style={{
             //   marginLeft: '3%',
             textDecoration: 'none',
-            //   color: defaultTheme.palette.info.main
+            // color: defaultTheme.palette.info.main,
           }}
         >
           <CoreModules.Button
-            variant="contained"
+            variant="outlined"
             color="error"
             startIcon={<AssetModules.AddIcon />}
             style={searchableInnerStyle.outlineBtn}
-            disabled={token == null}
+            // disabled={token == null}
           >
             Create New Project
           </CoreModules.Button>

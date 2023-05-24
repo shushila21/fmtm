@@ -15,6 +15,8 @@ import CreateOrganization from './views/CreateOrganization';
 
 const ProjectDetails = React.lazy(() => import('map/ProjectDetails'));
 const Submissions = React.lazy(() => import('map/Submissions'));
+const Tasks = React.lazy(() => import('map/Tasks'));
+
 const routes = createBrowserRouter([
   {
     element: <MainView />,
@@ -46,6 +48,16 @@ const routes = createBrowserRouter([
       {
         path: '/signup',
         element: <Create />,
+      },
+      {
+        path: '/tasks',
+        element: (
+          <ProtectedRoute>
+            <Suspense fallback={<div></div>}>
+              <Tasks />
+            </Suspense>
+          </ProtectedRoute>
+        ),
       },
       // {
       //     path: "/recoveraccess",
